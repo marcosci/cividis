@@ -1,0 +1,221 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "README-"
+)
+```
+
+# cividis
+
+[![Build Status](https://travis-ci.org/marcosci/cividis.svg?branch=master)](https://travis-ci.org/marcosci/cividis)
+[![codecov](https://codecov.io/gh/marcosci/cividis/branch/master/graph/badge.svg)](https://codecov.io/gh/marcosci/cividis)
+
+Jamie R. Nuñez, Christopher R. Anderton, and Ryan S. Renslow recently
+[introduced optimized color maps](https://arxiv.org/ftp/arxiv/papers/1712/1712.01662.pdf)
+for the scientific community. This so-called "cividis" colormap is generated
+by optimizing the ["viridis" colormap](https://bids.github.io/colormap/) and is
+optimal for viewing by those with or without color vision deficiency (CVD), a
+different visual perception of colors that affects 8.5% of the human population.
+It is designed to be perfectly perceptually-uniform, both in regular form and
+also when converted to black-and-white, and can be perceived by readers with
+all forms of color blindness. The cividis colormap was developed as a
+[Python module called "cmaputil"](https://github.com/pnnl/cmaputil).
+
+Because of the high interest of the scientific community in R, we make this
+new colormap available as an R package!
+
+This is how the colormap looks like in comparison to viridis colors and from the view of a blue-blind person:
+
+
+```{r  echo=FALSE, message=FALSE, fig.height=2.86}
+n_col <- 128
+
+img <- function(obj, nam) {
+  image(1:length(obj), 1, as.matrix(1:length(obj)), col=obj, 
+        main = nam, ylab = "", xaxt = "n", yaxt = "n",  bty = "n")
+}
+
+library(viridis)
+library(scales)
+library(colorspace)
+library(dichromat)
+
+par(mfrow=c(5, 1), mar=rep(1, 4))
+img(rev(cividis(n_col)), "cividis")
+img(rep("#FFFFFF", 128), nam = "")
+img(rev(viridis(n_col)), "viridis")
+img(rev(magma(n_col)), "magma")
+img(dichromat(rev(cividis(n_col)), "tritan"), "cividis blue-blind (tritanopia)")
+```
+
+... and like this in action (coloring neutral landscape models from [NLMR](https://github.com/marcosci/NLMR)): 
+
+```{r echo=FALSE, message=FALSE, fig.height=15, fig.width=7, fig.align='center'}
+library(NLMR)
+library(rasterVis)
+library(ggplot2)
+library(patchwork)
+library(cividis)
+
+# simulate NLM
+x <- nlm_random(ncol = 100,
+                nrow = 100)
+
+x1 <- nlm_gaussianfield(ncol = 100,
+                        nrow = 100,
+                        autocorr_range = 30)
+
+x2 <- nlm_mosaicfield(ncol = 100,
+                      nrow = 100,
+                      n = 30)
+
+x3 <- nlm_curds(c(0.9, 0.6, 0.6), c(20, 10, 5))
+
+
+gplot(x) +
+ geom_tile(aes(fill = value)) +
+ labs(x = "Easting",
+      y = "Northing") +
+ theme_nlm() +
+ scale_fill_cividis(
+    na.value = "transparent",
+    name = "",
+    guide = ggplot2::guide_colorbar(
+      barheight = ggplot2::unit(40, units = "mm"),
+      barwidth = ggplot2::unit(1, units = "mm"),
+      draw.ulim = FALSE,
+      title.hjust = 0.5,
+      title.vjust = 1.5,
+      label.hjust = 0.5
+ )) -> p1
+
+
+gplot(x1) +
+ geom_tile(aes(fill = value)) +
+ labs(x = "Easting",
+      y = "Northing") +
+ theme_nlm() +
+ scale_fill_cividis(
+    na.value = "transparent",
+    name = "",
+    guide = ggplot2::guide_colorbar(
+      barheight = ggplot2::unit(40, units = "mm"),
+      barwidth = ggplot2::unit(1, units = "mm"),
+      draw.ulim = FALSE,
+      title.hjust = 0.5,
+      title.vjust = 1.5,
+      label.hjust = 0.5
+ )) -> p2
+
+
+gplot(x2) +
+ geom_tile(aes(fill = value)) +
+ labs(x = "Easting",
+      y = "Northing") +
+ theme_nlm() +
+ scale_fill_cividis(
+    na.value = "transparent",
+    name = "",
+    guide = ggplot2::guide_colorbar(
+      barheight = ggplot2::unit(40, units = "mm"),
+      barwidth = ggplot2::unit(1, units = "mm"),
+      draw.ulim = FALSE,
+      title.hjust = 0.5,
+      title.vjust = 1.5,
+      label.hjust = 0.5
+ )) -> p3
+
+
+gplot(x3) +
+ geom_tile(aes(fill = value)) +
+ labs(x = "Easting",
+      y = "Northing") +
+ theme_nlm_discrete() +
+ scale_fill_cividis(
+    discrete = FALSE,
+    na.value = "transparent",
+    name = "",
+    guide = ggplot2::guide_colorbar(
+      barheight = ggplot2::unit(40, units = "mm"),
+      barwidth = ggplot2::unit(1, units = "mm"),
+      draw.ulim = FALSE,
+      title.hjust = 0.5,
+      title.vjust = 1.5,
+      label.hjust = 0.5
+ )) -> p4
+
+p1 + p2 + p3 + p4 + plot_layout(ncol = 1)
+```
+
+## Installation
+
+To install the developmental version of ``cividis``, use the following R code:
+
+```{r eval = FALSE}
+# install.packages("devtools")
+devtools::install_github("marcosci/cividis")
+```
+
+## Example
+
+This is a basic example which shows you how to solve a common problem:
+
+```{r example}
+## basic example code
+
+# load packages
+library(NLMR)
+library(rasterVis)
+library(cividis)
+
+# simulate NLM
+x <- nlm_random(ncol = 100,
+                nrow = 100)
+
+# plot it
+gplot(x) +
+ geom_tile(aes(fill = value)) +
+ labs(x = "Easting",
+      y = "Northing") +
+ theme_nlm() +
+ scale_fill_cividis(
+    na.value = "transparent",
+    name = "",
+    guide = ggplot2::guide_colorbar(
+      barheight = ggplot2::unit(40, units = "mm"),
+      barwidth = ggplot2::unit(1, units = "mm"),
+      draw.ulim = FALSE,
+      title.hjust = 0.5,
+      title.vjust = 1.5,
+      label.hjust = 0.5
+ )) -> p1
+```
+
+## Maintainer(s)
+
+Marco Sciaini - [@msciain](https://twitter.com/msciain) - <sciaini.marco@gmail.com>
+
+## Author(s)
+
+Marco Sciaini - [@msciain](https://twitter.com/msciain) - <sciaini.marco@gmail.com>   
+Cédric Scherer - [@CedScherer](https://twitter.com/CedScherer) - <cedricphilippscherer@gmail.com>
+
+## References
+
+The colormap in the `cividis` package was
+[created](https://github.com/pnnl/cmaputil) and
+[published](https://arxiv.org/ftp/arxiv/papers/1712/1712.01662.pdf) by Jamie
+R. Nuñez ([@jamienunez](https://github.com/jamienunez)) and colleagues.
+
+The package is mainly a cheeky copy of the beautiful
+[`viridis` package for R](https://github.com/sjmgarnier/viridis) that was
+created by [Simon Garnier](https://twitter.com/sjmgarnier),
+[Noam Ross](https://twitter.com/noamross), and
+[Bob Rudis](https://twitter.com/hrbrmstr).
